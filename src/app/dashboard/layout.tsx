@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, ReactNode, useEffect } from 'react';
+import { useState, ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/AuthProvider';
@@ -11,7 +11,7 @@ type DashboardLayoutProps = {
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   // Fungsi untuk toggle sidebar
@@ -23,11 +23,22 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     logout();
   };
 
+  // Menu navigasi dengan informasi role
   const navItems = [
-    { href: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2' },
-    { href: '/dashboard/HomePage', label: 'HomePage', icon: 'bi-person' },
-    { href: '/dashboard/MyPost', label: 'MyPost', icon: 'bi-gear' },
+    { href: '/dashboard', label: 'Dashboard', icon: 'bi-speedometer2', role: 'all' }, // Menu untuk semua role
+    { href: '/dashboard/HomePage', label: 'HomePage', icon: 'bi-house', role: 'all' }, // Menu untuk semua role
+    { href: '/dashboard/MyPost', label: 'MyPost', icon: 'bi-file-text', role: 'user' }, // Menu khusus user
+    { href: '/dashboard/ManageUsers', label: 'Manage Users', icon: 'bi-people', role: 'admin' }, // Menu khusus admin
+    { href: '/dashboard/Settings', label: 'Settings', icon: 'bi-gear', role: 'admin' }, // Menu khusus admin
   ];
+
+  // Filter menu berdasarkan role pengguna
+  const filteredNavItems = navItems.filter(item => {
+    if (item.role === 'all') return true;
+    if (item.role === 'admin' && isAdmin()) return true;
+    if (item.role === 'user' && !isAdmin()) return true;
+    return false;
+  });
 
   return (
     <div className="d-flex" style={{ minHeight: '100vh' }}>
@@ -46,9 +57,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             className="d-flex align-items-center text-black text-decoration-none"
             style={{ visibility: isCollapsed ? 'hidden' : 'visible' }}
           >
-            {/* <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-grid-3x3-gap-fill me-2" viewBox="0 0 16 16">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" className="bi bi-grid-3x3-gap-fill me-2" viewBox="0 0 16 16">
               <path d="M1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V2zM1 7a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V7zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V7zM1 12a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2zm5 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1v-2z"/>
-            </svg> */}
+            </svg>
             {!isCollapsed && <span className="fs-4 fw-bold">Dashboard</span>}
           </Link>
           <button
@@ -64,7 +75,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
         {/* Navigation Menu */}
         <ul className="nav nav-pills flex-column mb-auto">
-          {navItems.map((item) => (
+          {filteredNavItems.map((item) => (
             <li className="nav-item" key={item.href}>
               <Link
                 href={item.href}
@@ -86,18 +97,17 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           ))}
         </ul>
 
-        {/* <hr className="mt-auto" /> */}
-
         {/* User Profile & Logout di Bagian Bawah */}
         <div className="mt-auto">
-            <hr />
+          <hr />
           {!isCollapsed ? (
             // Tampilan saat sidebar dibuka
             <div className="d-flex align-items-center">
               <img src="https://github.com/mdo.png" alt="User" width="40" height="40" className="rounded-circle me-3" />
               <div className="flex-grow-1">
-                <strong className="d-block text-black">{user?.name || 'User'}</strong>
+                <strong className="d-block text-black">{user?.name}</strong>
                 <small className="text-muted">{user?.email || 'email@example.com'}</small>
+                <small className="d-block text-primary">{isAdmin() ? 'Admin' : 'User'}</small>
               </div>
             </div>
           ) : (

@@ -7,6 +7,7 @@ interface User {
   id: number;
   name: string;
   email: string;
+  role: 'admin' | 'user'; // <--- Tipe Role
 }
 
 interface AuthContextType {
@@ -15,6 +16,7 @@ interface AuthContextType {
   login: (token: string, userData: User) => void;
   logout: () => void;
   isLoading: boolean;
+  isAdmin: () => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,8 +78,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(false);
   };
 
+  // Tambahkan helper function
+  const isAdmin = () => {
+      return user?.role === 'admin';
+  };
+
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, isLoading, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
